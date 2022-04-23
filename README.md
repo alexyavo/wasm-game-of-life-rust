@@ -1,36 +1,41 @@
 ## About
 
-Somewhat modified implementation that follows https://rustwasm.github.io/docs/book/introduction.html
+Game of Life implementation in Rust, exposed via WASM and rendered with Javascript/Canvas 2D API.
 
+Somewhat modified version of  https://rustwasm.github.io/docs/book/introduction.html:  
+My implementation uses `Vec<u32>` to represent the cells, where each entry of the 
+vector contains the states of `32` cells (every bit means alive/dead).
 
-## 🚴 Usage
+## Project Bootstrap
 
-### 🐑 Use `cargo generate` to Clone this Template
-This project was generated from a template
-
+This project was generated from a template:
 ```
 cargo generate --git https://github.com/rustwasm/wasm-pack-template.git --name my-project
-cd my-project
 ```
 
-### 🛠️ Build 
+the project under `www` was generated using:
+```
+npm init wasm-app www
+```
+
+## 🛠️ Building 
+### WASM 
 from project root: 
 
 ```
 wasm-pack build
 ```
 
-this creates the `pkg` dir with all the WASM stuff (the binary and JSON wrappers).
+this generates the `pkg` dir with all the WASM stuff (the binary and JSON wrappers).
 
-### 
-
+### `www`
 from `www` dir:
 ```
 npm install
 npm start
 ```
 
-and go to `http://localhost:8080`
+and now go to `http://localhost:8080`
 
 
 ### 🔬 Test in Headless Browsers with `wasm-pack test`
@@ -45,7 +50,7 @@ wasm-pack test --headless --firefox
 wasm-pack publish
 ```
 
-## 🔋 Batteries Included
+## Dependencies
 
 * [`wasm-bindgen`](https://github.com/rustwasm/wasm-bindgen) for communicating
   between WebAssembly and JavaScript.
