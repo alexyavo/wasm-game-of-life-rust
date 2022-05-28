@@ -4,7 +4,7 @@ use std::fmt;
 use wasm_bindgen::prelude::*;
 use js_sys::Math::random;
 extern crate web_sys;
-
+use web_sys::console;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator.
 #[cfg(feature = "wee_alloc")]
@@ -15,8 +15,25 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
     ( $( $t:tt )* ) => {
-        web_sys::console::log_1(&format!( $( $t )* ).into());
+      console::log_1(&format!( $( $t )* ).into());
     }
+}
+
+pub struct Timer<'a> {
+  name: &'a str,
+}
+
+impl<'a> Timer<'a> {
+  pub fn new(name: &'a str) -> Timer<'a> {
+    console::time_with_label(name);
+    Timer { name }
+  }
+}
+
+impl<'a> Drop for Timer<'a> {
+  fn drop(&mut self) {
+    console::time_end_with_label(self.name);
+  }
 }
 
 #[wasm_bindgen]
@@ -52,6 +69,11 @@ fn set_cell_of(
     cells[cell_repr_entry_idx] &= !(1 << cell_repr_idx);
   }
 }
+
+// fn random() -> f64 {
+//   let mut rng = rand::thread_rng();
+//   rng.gen_range(0.0..1.0)
+// }
 
 #[wasm_bindgen]
 impl Universe {
@@ -112,22 +134,31 @@ impl Universe {
   }
 
   pub fn tick(&mut self) {
-    let mut next_cells = self.cells.clone();
+    let _timer = Timer::new("Universe::tick");
 
-    for row in 0..self.height {
-      for col in 0..self.width {
-        let curr_cell_state = self.is_alive(row, col);
-        let live_neighbors = self.live_neighbor_count(row, col);
-        let next_cell_state = next_state(curr_cell_state, live_neighbors);
+    let mut next_cells = {
+      let _timer = Timer::new("allocate next cells");
+      self.cells.clone()
+    };
 
-        if curr_cell_state != next_cell_state {
-          // optimization, no need for redundant operations if state didn't change.
-          // not sure how much it saves...
-          set_cell_of(&mut next_cells, self.cell_coords(row, col), next_cell_state);
+    {
+      let _timer = Timer::new("new generation");
+      for row in 0..self.height {
+        for col in 0..self.width {
+          let curr_cell_state = self.is_alive(row, col);
+          let live_neighbors = self.live_neighbor_count(row, col);
+          let next_cell_state = next_state(curr_cell_state, live_neighbors);
+
+          if curr_cell_state != next_cell_state {
+            // optimization, no need for redundant operations if state didn't change.
+            // not sure how much it saves...
+            set_cell_of(&mut next_cells, self.cell_coords(row, col), next_cell_state);
+          }
         }
       }
     }
 
+    let _timer = Timer::new("free old cells");
     self.cells = next_cells;
   }
 
